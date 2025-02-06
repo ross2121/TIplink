@@ -1,9 +1,7 @@
-import { Provider } from "@/components/providers"
 import GoogleProvide from "next-auth/providers/google"
-import { PrismaClient } from "@prisma/client";
 import prisma from "@/db/index"
-import { Session } from 'next-auth';
 import { Keypair} from "@solana/web3.js"
+import { Account, Session } from "next-auth";
 
 
 export interface session extends Session {
@@ -14,6 +12,19 @@ export interface session extends Session {
       uid: string;
     };
 }
+
+interface token{
+
+    uid: string,
+ 
+}
+interface User{
+    uid :number,
+    name:string,
+    email:string,
+    sub:string
+image:string
+}
 export const AUTH={
     secret: process.env.NEXTAUTH_SECRET || 'secr3t',
     providers:[
@@ -23,22 +34,24 @@ export const AUTH={
      })
     ],
     callbacks:{ 
-        session: ({ session, token }: any): session => {
+
+        // @ts-expect-error it is necessary for price to exist
+        session: ({ session, token }): session => {
             const newSession: session = session as session;
             if (newSession.user && token.uid) {
-              // @ts-ignore
               console.log("check");
               newSession.user.uid = token.uid ?? "";
             }
             console.log("Session",newSession);
-            return newSession!;
+            return newSession;
         },
-        async jwt({ token, account, profile }: any) {
+        async jwt({ token, account, profile }: {token:token,account:Account,profile:User}) {
             const user = await prisma.user.findFirst({
                 where: {
                     sub: account?.providerAccountId ?? ""
                 }
             })
+            console.log(profile);
             if (user) {
               token.uid=user.id
             }
@@ -46,15 +59,16 @@ export const AUTH={
             console.log("token",token);
             return token
         },
-        async signIn({ user, account, profile, email, credentials }: any) {
-            console.log(account);
+        async signIn({ user, account, profile, email, credentials }: {user:User,account:Account,profile:User,email:string,credentials:string}) {
+            console.log("account",account);
+           console.log(email);
             if (account?.provider=== "google") {
                 console.log("email",user);
                 const email = user.email;
                 console.log(email);
                 if (!email) {
                     return false
-                }
+                } console.log("profile",profile,email,credentials);
                 
                 const userDb = await prisma.user.findFirst({
                     where: {
@@ -66,19 +80,19 @@ export const AUTH={
                 }
                 const Keypairs=Keypair.generate();
                 const privatekey=Keypairs.secretKey;
-                const publickey=Keypairs.publicKey.toBase58();
+                const publickey=Keypairs.publicKey;
                 try{await prisma.user.create({
                     data: {
                          email:email,
                         name: user.name,
                         sub:account.providerAccountId,
-                        //@ts-ignore
+                       
                         picture: user.image,
                      
                         SQLWALLET:{
                             create:{
                                 privateKey:privatekey.toString(),
-                                publiclkey:publickey,
+                                publiclkey:publickey.toBase58(),
                             }
                         },
                         InrWallet:{

@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react"
 export const Appbar=()=>{
    const session=useSession();
     return <div>
-        <div className="text-6xl color-blue">
+        <div className="text-9xl color-blue font-bold ">
             TIPLINK
         </div>
         <div >

@@ -23,7 +23,6 @@ if(price==null){
    
     return SUPPORTED_TOKENS.map(s=>({
             ...s,
-            // @ts-ignore
             price:price[s.name].usd
             }))
 }

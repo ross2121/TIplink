@@ -1,17 +1,19 @@
+"use client"
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/db/index"
 import { getServerSession } from "next-auth";
 import {AUTH} from "@/lib/auth"
-import { useRouter } from "next/navigation";
+
 import { Connection, Keypair, VersionedTransaction } from "@solana/web3.js";
 
 export async function POST(req:NextRequest){
     const connection=new Connection("")
+    
   const session=await getServerSession(AUTH);
-  const data:{quoteResponse:any}=await req.json();
-  const router=useRouter();
+  const data:{quoteResponse:Response}=await req.json();
+ 
   if(!session?.user){
-    router.push("/");
+    return NextResponse.json({Message:"No user found"},{status:400});
   }
   const USer=await prisma.sOLWALLET.findFirst({
       where:{
@@ -37,7 +39,7 @@ return NextResponse.json({Message:"No Sol wallet found"},{status:400});
   ).json();
  
 const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
-var transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
 if(USer.privateKey===null){
     return NextResponse.json({Message:"No key found"})
 }

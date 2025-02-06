@@ -5,16 +5,26 @@ export interface tokenwithdetails extends TokenDetails{
     balance:string,
     usdbalance:string
 }
-export function Balnce(address:string){
+export function Balance(address:string){
     const [tokenBalances, setTokenBalances] = useState<{
         totalBalance: number,
         tokens: tokenwithdetails[]
     } | null >(null);
+    console.log(address);
    const [loading,setloading]=useState(true);
+   console.log("address",address);
    useEffect(() => {
-    axios.get(`/api/tokens?address=${address}`)
+    // @ts-expect-error it is necessary for price to exist
+    axios.get(`api/tokens?address=${address.publiclkey}`)
         .then(res => {
+        
             setTokenBalances(res.data);
+            if(res.data.name=="USD-coin"){
+                if(res.data.tok){
+                    res.data.usdbalance="0"
+                }
+            }
+            console.log(res.data);
             setloading(false)
         })
 }, [])
